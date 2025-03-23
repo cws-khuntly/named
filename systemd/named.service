@@ -1,0 +1,39 @@
+#==============================================================================
+#
+#          FILE:  named.service
+#         USAGE:  Install unit file using appropriate systemctl syntax. Example:
+#
+#                 systemctl enable named
+#
+#     ARGUMENTS:  None
+#   DESCRIPTION:  systemd unit file for BIND named service
+#
+#       OPTIONS:  ---
+#  REQUIREMENTS:  ---
+#          BUGS:  ---
+#         NOTES:  ---
+#        AUTHOR:  Kevin Huntly <kmhuntly@gmail.com>
+#       COMPANY:  ---
+#       VERSION:  1.0
+#       CREATED:  ---
+#      REVISION:  ---
+#==============================================================================
+[Unit]
+Description=Berkeley Internet Name Domain (DNS)
+Wants=nss-lookup.target
+Wants=named-setup-rndc.service
+Before=nss-lookup.target
+After=named-setup-rndc.service
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/named -u named -t /var/named -c /etc/named.conf -4
+ExecReload=/bin/sh -c 'if /usr/sbin/rndc null > /dev/null 2>&1; then /usr/sbin/rndc reload; else /bin/kill -HUP $MAINPID; fi'
+ExecStop=/bin/sh -c '/usr/sbin/rndc stop > /dev/null 2>&1 || /bin/kill -TERM $MAINPID'
+PIDFile=/var/run/named.pid
+SuccessExitStatus=0
+RemainAfterExit=true
+
+[Install]
+WantedBy=default.target
